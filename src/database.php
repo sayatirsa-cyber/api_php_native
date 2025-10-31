@@ -1,10 +1,5 @@
 <?php
-/**
- * src/database.php
- * Class yang bertanggung jawab membuat objek PDO
- */
- 
-// Panggil file konfigurasi 
+
 require_once __DIR__ . '/api_php_native.php';
 
 class Database {
