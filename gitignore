@@ -1,0 +1,16 @@
+# File Konfigurasi Sensitif (INI PALING PENTING!)
+# File yang berisi username/password database Anda:
+src/api_php_native.php 
+config/db_config.php
+
+# Folder yang dihasilkan secara otomatis (jika Anda menggunakan Composer)
+/vendor/
+
+# Folder Log
+/logs/
+
+# File yang dibuat oleh sistem atau IDE
+.DS_Store
+.vscode/
+.idea/
+*.log
