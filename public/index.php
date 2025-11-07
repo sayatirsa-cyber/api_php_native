@@ -1,8 +1,21 @@
 <?php
 /**
- * index.php
+ * public/index.php
  * File utama yang menangani inisialisasi Router dan pemetaan semua rute.
  */
+
+// ====================================================
+// PENGATURAN HEADER CORS
+// ====================================================
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: *");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Content-Type: application/json; charset=UTF-8");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
 // Menggunakan namespace untuk kelas
 use Src\Router;
@@ -12,42 +25,38 @@ use Src\Controllers\UserController;
 // PENGATURAN AWAL
 // ----------------------------------------------------
 
+// Memuat file koneksi database dari folder config/ (Path Perbaikan)
+require __DIR__ . '/../config/database.php'; 
+
 // Memuat (require) file Router dan Controller
-// Pastikan path sudah benar
 require __DIR__ . '/../src/Router.php';
 require __DIR__ . '/../src/Controllers/UserController.php';
 
-// Inisialisasi Router dan Controller
+// Inisialisasi Router
 $router = new Router();
-// Instansiasi UserController dilakukan secara otomatis di Router.php yang sudah diperbaiki, 
-// tetapi kita akan menyederhanakan cara add rutenya di sini.
-// $userController = new UserController(); // TIDAK perlu jika Router.php sudah diperbaiki
-
-// ----------------------------------------------------
-// DAFTAR ROUTE LENGKAP (CRUD)
-// ----------------------------------------------------
-$controllerClass = 'UserController'; // Nama kelas yang akan dipanggil oleh Router
+$controllerClass = 'UserController'; 
 
 // Base Path untuk sumber daya users
 $baseRoute = '/api/v1/users';
 
-// 1. Rute Index (GET /api/v1/users) - DAFTAR PENGGUNA (R - Read All)
+// ----------------------------------------------------
+// DAFTAR ROUTE LENGKAP (CRUD)
+// ----------------------------------------------------
+
+// R - Read All
 $router->add('GET', $baseRoute, [$controllerClass, 'index']); 
 
-// 2. Rute Show (GET /api/v1/users/{id}) - DETAIL PENGGUNA (R - Read One)
-// Menggunakan parameter dinamis {id}
+// R - Read One
 $router->add('GET', $baseRoute . '/{id}', [$controllerClass, 'show']);
 
-// 3. Rute Create (POST /api/v1/users) - BUAT PENGGUNA BARU (C - Create)
+// C - Create
 $router->add('POST', $baseRoute, [$controllerClass, 'create']);
 
-// 4. Rute Update (PUT /api/v1/users/{id}) - UBAH DATA PENGGUNA (U - Update)
-// Menggunakan parameter dinamis {id}
+// U - Update
 $router->add('PUT', $baseRoute . '/{id}', [$controllerClass, 'update']);
-$router->add('PATCH', $baseRoute . '/{id}', [$controllerClass, 'update']); // PATCH untuk update parsial
+$router->add('PATCH', $baseRoute . '/{id}', [$controllerClass, 'update']); 
 
-// 5. Rute Delete (DELETE /api/v1/users/{id}) - HAPUS PENGGUNA (D - Delete)
-// Menggunakan parameter dinamis {id}
+// D - Delete
 $router->add('DELETE', $baseRoute . '/{id}', [$controllerClass, 'delete']);
 
 

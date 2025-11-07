@@ -6,8 +6,8 @@
 
 namespace Src\Controllers;
 
-// Memanggil file koneksi database
-require_once __DIR__ . '/../database.php'; 
+// PATH PERBAIKAN: Naik dua level (../../), lalu masuk ke config/database.php
+require_once __DIR__ . '/../../config/database.php'; 
 
 class UserController
 {
@@ -16,48 +16,41 @@ class UserController
     public function __construct()
     {
         try {
-            // Inisialisasi koneksi PDO
             $database = new \Database();
             $this->db = $database->getPdo();
         } catch (\PDOException $e) {
-            http_response_code(500);
+            http_response_code(500); 
             exit(json_encode(["success" => false, "message" => "Server Error: Koneksi database tidak tersedia"]));
         }
     }
     
     // ===============================================
-    // C - CREATE (Method: POST)
+    // C - CREATE (Method: POST /api/v1/users)
     // ===============================================
-
     public function create(): void
     {
-        // Ambil data JSON dari body request
         $input = json_decode(file_get_contents('php://input'), true);
 
         if (!isset($input['nama'], $input['email'], $input['password'])) {
-            http_response_code(400); // Bad Request
+            http_response_code(400); 
             exit(json_encode(["success" => false, "message" => "Input nama, email, dan password wajib diisi."]));
         }
 
         $nama = $input['nama'];
         $email = $input['email'];
         $password_plain = $input['password'];
-        
-        // HASH Password (WAJIB)
         $password_hash = password_hash($password_plain, PASSWORD_BCRYPT);
 
         try {
-            // Prepared Statement untuk INSERT data
             $stmt = $this->db->prepare("INSERT INTO users (nama, email, password) VALUES (:nama, :email, :password_hash)");
             $stmt->bindParam(':nama', $nama);
             $stmt->bindParam(':email', $email);
             $stmt->bindParam(':password_hash', $password_hash);
             
             $stmt->execute();
-            
             $new_id = $this->db->lastInsertId();
 
-            http_response_code(201); // 201 Created
+            http_response_code(201); 
             echo json_encode([
                 "success" => true, 
                 "message" => "User berhasil dibuat",
@@ -65,22 +58,20 @@ class UserController
             ]);
 
         } catch (\PDOException $e) {
-            // Cek error jika email sudah terdaftar
             if ($e->getCode() === '23000') {
-                http_response_code(409); // Conflict
+                http_response_code(409); // Conflict (jika email UNIQUE)
                 exit(json_encode(["success" => false, "message" => "Email sudah terdaftar."]));
             }
-            
             http_response_code(500);
             exit(json_encode(["success" => false, "message" => "Gagal menyimpan data: " . $e->getMessage()]));
         }
     }
     
     // ===============================================
-    // R - READ (Method: GET)
+    // R - READ (Method: GET /api/v1/users)
     // ===============================================
 
-    // Read All
+    // Read All (Index)
     public function index(): void
     {
         try {
@@ -88,21 +79,17 @@ class UserController
             $users = $stmt->fetchAll();
 
             http_response_code(200);
-            echo json_encode([
-                "success" => true,
-                "data" => $users
-            ]);
+            echo json_encode(["success" => true, "data" => $users]);
         } catch (\PDOException $e) {
             http_response_code(500);
             echo json_encode(["success" => false, "message" => "Gagal mengambil data: " . $e->getMessage()]);
         }
     }
 
-    // Read One
+    // Read One (Show)
     public function show(string $id): void
     {
         try {
-            // Prepared Statement untuk menghindari SQL Injection
             $stmt = $this->db->prepare("SELECT id, nama, email FROM users WHERE id = :id");
             $stmt->bindParam(':id', $id, \PDO::PARAM_INT);
             $stmt->execute();
@@ -122,15 +109,12 @@ class UserController
     }
 
     // ===============================================
-    // U - UPDATE (Method: PUT/PATCH)
+    // U - UPDATE (Method: PUT/PATCH /api/v1/users/{id})
     // ===============================================
-
     public function update(string $id): void
     {
-        // Ambil data dari body request
         $input = json_decode(file_get_contents('php://input'), true);
         
-        // Pastikan ada data yang dikirim untuk diupdate
         if (empty($input)) {
             http_response_code(400);
             exit(json_encode(["success" => false, "message" => "Tidak ada data untuk diupdate."]));
@@ -139,7 +123,6 @@ class UserController
         $fields = [];
         $params = ['id' => $id];
         
-        // Membangun query secara dinamis
         if (isset($input['nama'])) {
             $fields[] = "nama = :nama";
             $params['nama'] = $input['nama'];
@@ -149,7 +132,6 @@ class UserController
             $params['email'] = $input['email'];
         }
         if (isset($input['password'])) {
-            // HASH password jika diupdate
             $fields[] = "password = :password";
             $params['password'] = password_hash($input['password'], PASSWORD_BCRYPT);
         }
@@ -180,19 +162,17 @@ class UserController
     }
 
     // ===============================================
-    // D - DELETE (Method: DELETE)
+    // D - DELETE (Method: DELETE /api/v1/users/{id})
     // ===============================================
-
     public function delete(string $id): void
     {
         try {
-            // Prepared Statement untuk DELETE data
             $stmt = $this->db->prepare("DELETE FROM users WHERE id = :id");
             $stmt->bindParam(':id', $id, \PDO::PARAM_INT);
             $stmt->execute();
 
             if ($stmt->rowCount() > 0) {
-                http_response_code(200); // Atau 204 No Content
+                http_response_code(200); 
                 echo json_encode(["success" => true, "message" => "User ID $id berhasil dihapus."]);
             } else {
                 http_response_code(404);
